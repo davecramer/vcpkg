@@ -25,6 +25,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - uses: ssrobins/install-cmake@v1
+      
       # Runs a single command using the runners shell
       - name: Setup msvc
         uses:  ilammy/msvc-dev-cmd@v1
