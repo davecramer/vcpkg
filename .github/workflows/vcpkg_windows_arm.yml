@@ -43,3 +43,8 @@ jobs:
           git clone https://github.com/microsoft/vcpkg.git '${{ github.workspace }}/vcpkg'
           cd '${{ github.workspace }}/vcpkg'
           ./bootstrap-vcpkg.sh
+
+      - name: Install Packages
+        run: | 
+          cd '${{ github.workspace }}/vcpkg'
+          ./vcpkg.exe install --debug
