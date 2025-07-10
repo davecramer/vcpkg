@@ -47,4 +47,4 @@ jobs:
       - name: Install Packages
         run: | 
           cd '${{ github.workspace }}/vcpkg'
-          vcpkg.exe install --triplet=arm64-windows libxml2 lz4 pkgconf zlib--debug
+          vcpkg.exe install --triplet=arm64-windows libxml2 lz4 pkgconf zlib --debug
