@@ -47,7 +47,7 @@ jobs:
       - name: Install Packages
         run: | 
           cd '${{ github.workspace }}/vcpkg'
-          vcpkg.exe install --triplet=arm64-windows libxml2 lz4 pkgconf zlib --debug
+          vcpkg.exe install --triplet=arm64-windows libxml2 lz4 pkgconf zlib vcpkg-tool-meson:arm64-windows vcpkg-tool-ninja:arm64-windows --debug
 
       - name: Checkout PostgreSQL
         uses: actions/checkout@v4
