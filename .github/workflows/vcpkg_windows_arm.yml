@@ -47,4 +47,4 @@ jobs:
       - name: Install Packages
         run: | 
           cd '${{ github.workspace }}/vcpkg'
-          ./vcpkg.exe install --debug
+          vcpkg.exe install --debug
