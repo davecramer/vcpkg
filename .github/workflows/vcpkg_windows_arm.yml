@@ -48,4 +48,4 @@ jobs:
         run: | 
           cd '${{ github.workspace }}/vcpkg'
           vcpkg.exe update
-          vcpkg.exe install --debug
+          vcpkg.exe install libxml:arm64-windows --debug
