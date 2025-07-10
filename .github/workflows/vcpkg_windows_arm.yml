@@ -38,12 +38,8 @@ jobs:
           toolset: 14.43
           vsversion: 2022
       
-      - name: Print Environment
-        run: env
-
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgJsonGlob: '**/vcpkg.json'
-          runVcpkgInstall: true
+      - name: Install vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git '${{ github.workspace }}/vcpkg'
+          cd '${{ github.workspace }}/vcpkg'
+          ./bootstrap-vcpkg.sh
