@@ -48,3 +48,35 @@ jobs:
         run: | 
           cd '${{ github.workspace }}/vcpkg'
           vcpkg.exe install --triplet=arm64-windows libxml2 lz4 pkgconf zlib --debug
+
+      - name: Checkout PostgreSQL
+        uses: actions/checkout@v4
+        with:
+            repository: postgres/postgres
+            path: postgresql-master
+            ref: master
+    
+
+      - name: Configure
+        run: |
+          cd postgresql-master
+          
+          meson setup build `
+            --prefix=C:\postgresql `
+            --buildtype=debugoptimized `
+            -Dlibxml=enabled `
+            -Dlibicu=enabled `
+            -Dlibedit=disabled `
+            -Dlibxslt=enabled `
+            -Dopenssl=enabled `
+            -Dzlib=enabled `
+            -Dlz4=enabled `
+            -Dzstd=enabled `
+            -Dextra_lib_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib" `
+            -Dextra_include_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\include" `
+            -Dpkg_config_path="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib\pkgconfig"
+          
+      - name: Build
+        run: |
+          cd postgresql-master\build
+          ninja -j 1    
