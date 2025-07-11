@@ -36,6 +36,9 @@ jobs:
              mingw-w64-clang-aarch64-meson
              mingw-w64-clang-aarch64-ninja
 
+      - name: show msys2
+        run: ls C:\a\_temp\setup-msys2\
+               
       - uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: "5.40"
