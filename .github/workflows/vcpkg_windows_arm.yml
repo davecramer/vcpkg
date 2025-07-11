@@ -25,20 +25,17 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
-      - uses: msys2/setup-msys2@v2
-        with:
-          msystem: clangarm64
-          update: true
-          install:
-             bison
-             flex
-             patch
-             mingw-w64-clang-aarch64-meson
-             mingw-w64-clang-aarch64-ninja
+      - name: Get Winflexbison
+        run: |
+          curl -L -o winflexbison.zip "https://github.com/lexxmark/winflexbison/releases/download/v2.5.25/win_flex_bison-2.5.25.zip"
+          mkdir winflexbison
+          cd winflexbison
+          unzip ../winflexbison.zip
+          mkdir /builddeps
+          cp *.exe /builddeps
+          echo "/builddeps" >> $ENV:GITHUB_PATH
+      
 
-      - name: show msys2
-        run: ls C:\a\_temp\setup-msys2\
-               
       - uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: "5.40"
