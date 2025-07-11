@@ -68,11 +68,14 @@ jobs:
             ref: master
     
 
+      - name: Show path
+        run: ls C:\a\vcpkg\vcpkg\vcpkg\downloads\tools
+
       - name: Configure
         run: |
           cd postgresql-master
           
-          meson setup build `
+          python C:\a\vcpkg\vcpkg\vcpkg\downloads\tools\meson-1.8.2-3d2461\meson.py setup build `
             --prefix=C:\postgresql `
             --buildtype=debugoptimized `
             -Dlibxml=enabled `
