@@ -32,7 +32,7 @@ jobs:
           cd winflexbison
           unzip ../winflexbison.zip
           mkdir /builddeps
-          cp -r . /builddeps
+          cp -r * /builddeps
           echo "/builddeps" >> $ENV:GITHUB_PATH
           dir /builddeps
       
