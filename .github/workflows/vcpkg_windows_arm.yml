@@ -67,7 +67,12 @@ jobs:
             repository: postgres/postgres
             path: postgresql-master
             ref: master
-    
+
+      - name: Patch Postgres for arm
+        run: |
+          cd postgres-master
+          git am ..\0001-patch-for-arm.patch
+          
       - name: Configure
         run: |
           cd postgresql-master
