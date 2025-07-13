@@ -70,6 +70,8 @@ jobs:
 
       - name: Patch Postgres for arm
         run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
           cd postgresql-master
           git am ..\0001-patch-for-arm.patch
           
