@@ -85,7 +85,7 @@ jobs:
         uses: BSFishy/meson-build@v1.0.3
         with:
             directory: postgresql-master
-            action: setup
+            action: build
             options: --prefix=C:\postgresql `
               --buildtype=debugoptimized `
               -Dlibxslt=disabled `
