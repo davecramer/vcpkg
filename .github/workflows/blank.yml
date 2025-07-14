@@ -29,7 +29,7 @@ jobs:
         shell: pwsh
         run: |
           echo "D:\foo" >> "$GITHUB_PATH"
-          $env:PATH="D:\foo;${env:GITHUB_PATH}"
+          $env:PATH="D:\foo;${env:PATH}"
           Write-Host $env:path
           
       - name: Run something else
