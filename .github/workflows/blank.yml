@@ -28,7 +28,9 @@ jobs:
       - name: Prepend to PATH
         shell: pwsh
         run: |
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "D:\foo" >> "$GITHUB_PATH"
+          $env:PATH="D:\foo;${env:GITHUB_PATH}"
+          Write-Host $env:path
           
       - name: Run something else
         run: write-host $env:path
