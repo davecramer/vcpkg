@@ -67,8 +67,6 @@ jobs:
           vcpkg-tool-meson:arm64-windows `
           vcpkg-tool-ninja:arm64-windows `
           --debug
-          $vcpkg_path='${{ github.workspace }}/vcpkg/bin'
-          $ENV:GITHUB_PATH="$vcpkg_path;$ENV:GITHUB_PATH"
 
       - name: Checkout PostgreSQL
         uses: actions/checkout@v4
@@ -76,6 +74,9 @@ jobs:
             repository: postgres/postgres
             path: postgresql-master
             ref: master
+
+      - name: add vcpkg path
+        run: echo "${{ github.workspace }}/vcpkg/bin" >> "$GITHUB_PATH"
 
       - name: Patch Postgres for arm
         run: |
@@ -86,7 +87,6 @@ jobs:
           
       - name: Configure
         run: |
-          $env:path="${{ github.workspace }}/vcpkg/bin;$env:path"
           cd postgresql-master
           python ${{ github.workspace }}\vcpkg\downloads\tools\meson-1.8.2-3d2461\meson.py setup build `
             --prefix=C:\postgresql `
@@ -99,6 +99,5 @@ jobs:
           
       - name: Build
         run: |
-          $env:path="${{ github.workspace }}/vcpkg/bin;$env:path"
           cd postgresql-master\build
           ninja -j 1    
