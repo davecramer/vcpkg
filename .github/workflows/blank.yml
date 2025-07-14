@@ -31,4 +31,4 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           
       - name: Run something else
-        run: write-host ${ENV:GITHUB_PATH}
+        run: write-host $env:path
