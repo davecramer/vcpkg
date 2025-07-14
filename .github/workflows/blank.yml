@@ -32,4 +32,4 @@ jobs:
           $ENV:GITHUB_PATH="$foo;$ENV:GITHUB_PATH"
           write-host ${ENV:GITHUB_PATH}
       - name: Run something else
-        run: echo "Hello World"
+        run: write-host ${ENV:GITHUB_PATH}
