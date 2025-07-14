@@ -26,8 +26,8 @@ jobs:
       - uses: actions/checkout@v4
 
       # Runs a single command using the runners shell
-      - name: Run a one-line script
+      - name: Set Path
         run: |
           $foo='blah'
           $ENV:GITHUB_PATH="$foo;$ENV:GITHUB_PATH"
-          $env
+          write-host ${ENV:GITHUB_PATH}
