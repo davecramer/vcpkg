@@ -86,6 +86,7 @@ jobs:
         with:
             directory: postgresql-master
             action: build
+            meson-version: 1.8.2
             options: --prefix=C:\postgresql `
               --buildtype=debugoptimized `
               -Dlibxslt=disabled `
