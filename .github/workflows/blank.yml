@@ -29,7 +29,7 @@ jobs:
       - name: Set Path
         run: |
           $foo='blah'
-          $ENV:GITHUB_PATH="$foo;$ENV:GITHUB_PATH"
+          "$foo;$ENV:GITHUB_PATH" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8
           write-host ${ENV:GITHUB_PATH}
       - name: Run something else
         run: write-host ${ENV:GITHUB_PATH}
