@@ -50,15 +50,8 @@ jobs:
           toolset: 14.43
           vsversion: 2022
       
-      - name: Install vcpkg
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git '${{ github.workspace }}/vcpkg'
-          cd '${{ github.workspace }}/vcpkg'
-          ./bootstrap-vcpkg.sh
-
       - name: Install Packages
         run: | 
-          cd '${{ github.workspace }}/vcpkg'
           vcpkg.exe install --triplet=arm64-windows `
           libxml2 `
           lz4 `
@@ -76,7 +69,7 @@ jobs:
             ref: master
 
       - name: add vcpkg path
-        run: echo "${{ github.workspace }}\vcpkg\bin" >> $ENV:GITHUB_PATH
+        run: echo "c:\vcpkg\installed\arm64-windows\bin" >> $ENV:GITHUB_PATH
 
       - name: Patch Postgres for arm
         run: |
@@ -88,7 +81,7 @@ jobs:
       - name: Configure
         run: |
           cd postgresql-master
-          python ${{ github.workspace }}\vcpkg\downloads\tools\meson-1.8.2-3d2461\meson.py setup build `
+          python c:\vcpkg\downloads\tools\meson-1.8.2-3d2461\meson.py setup build `
             --prefix=C:\postgresql `
             --buildtype=debugoptimized `
             -Dlibxslt=disabled `
