@@ -67,6 +67,8 @@ jobs:
           vcpkg-tool-meson:arm64-windows `
           vcpkg-tool-ninja:arm64-windows `
           --debug
+          $vcpkg_path='${{ github.workspace }}/vcpkg/bin'
+          $ENV:GITHUB_PATH="$vcpkg_path;$ENV:GITHUB_PATH"
 
       - name: Checkout PostgreSQL
         uses: actions/checkout@v4
