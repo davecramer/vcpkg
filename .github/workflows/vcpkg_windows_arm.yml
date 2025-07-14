@@ -86,8 +86,7 @@ jobs:
           
       - name: Configure
         run: |
-          $vcpkg_path='${{ github.workspace }}/vcpkg/bin'
-          $env:PATH="${vcpkg_path}:${env.PATH}"
+          echo '${{ github.workspace }}/vcpkg/bin' >> $GITHUB_PATH
           cd postgresql-master
           python ${{ github.workspace }}\vcpkg\downloads\tools\meson-1.8.2-3d2461\meson.py setup build `
             --prefix=C:\postgresql `
@@ -100,7 +99,6 @@ jobs:
           
       - name: Build
         run: |
-          $vcpkg_path='${{ github.workspace }}/vcpkg/bin'
-          $env:PATH="${vcpkg_path}:${env.PATH}"
+          echo '${{ github.workspace }}/vcpkg/bin' >> $GITHUB_PATH
           cd postgresql-master\build
           ninja -j 1    
