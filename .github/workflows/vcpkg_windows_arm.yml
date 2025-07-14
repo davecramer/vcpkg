@@ -76,7 +76,7 @@ jobs:
             ref: master
 
       - name: add vcpkg path
-        run: echo "${{ github.workspace }}/vcpkg/bin" >> $ENV:GITHUB_PATH
+        run: echo "${{ github.workspace }}\vcpkg\bin" >> $ENV:GITHUB_PATH
 
       - name: Patch Postgres for arm
         run: |
