@@ -60,7 +60,6 @@ jobs:
         run: | 
           cd '${{ github.workspace }}/vcpkg'
           vcpkg.exe install --triplet=arm64-windows `
-          --vcpkg-root=${env:VCPKG_ROOT}
           libxml2 `
           lz4 `
           pkgconf `
