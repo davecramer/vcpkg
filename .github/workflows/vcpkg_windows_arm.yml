@@ -77,18 +77,21 @@ jobs:
           git config --global user.email "<>"
           cd postgresql-master
           git am ..\0001-patch-for-arm.patch
-          
+
+      - name: Setup Python
+        uses: actions/setup-python@v1
+    
       - name: Configure
-        run: |
-          cd postgresql-master
-          python c:\vcpkg\downloads\tools\meson-1.8.2-3d2461\meson.py setup build `
-            --prefix=C:\postgresql `
-            --buildtype=debugoptimized `
-            -Dlibxslt=disabled `
-            -Dlibxml=disabled `
-            -Dextra_lib_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib" `
-            -Dextra_include_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\include" `
-            -Dpkg_config_path="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib\pkgconfig"
+        uses: BSFishy/meson-build@v1.0.3
+        with:
+            directory: postgresql-master
+            options: --prefix=C:\postgresql `
+              --buildtype=debugoptimized `
+              -Dlibxslt=disabled `
+              -Dlibxml=disabled `
+              -Dextra_lib_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib" `
+              -Dextra_include_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\include" `
+              -Dpkg_config_path="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib\pkgconfig"
           
       - name: Build
         run: |
