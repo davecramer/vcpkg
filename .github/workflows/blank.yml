@@ -28,11 +28,7 @@ jobs:
       - name: Prepend to PATH
         shell: pwsh
         run: |
-          $newPath = "D:\custom\bin"
-          $existing = Get-Content $env:GITHUB_PATH
-          Set-Content $env:GITHUB_PATH $newPath
-          $existing | Add-Content $env:GITHUB_PATH
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           
-    
       - name: Run something else
         run: write-host ${ENV:GITHUB_PATH}
