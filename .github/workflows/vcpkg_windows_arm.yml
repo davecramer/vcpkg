@@ -91,7 +91,7 @@ jobs:
           [Environment]::SetEnvironmentVariable("Path", "$pathString;$currentPath", "User")
           .\setenvarm.ps1
           cd postgresql-master
-          C:\hostedtoolcache\windows\Python\3.12.9\x64\Scripts\meson.exe setup build `
+          meson.exe setup build `
               --prefix=C:\postgresql `
               --buildtype=debugoptimized `
               -Dlibxslt=disabled `
