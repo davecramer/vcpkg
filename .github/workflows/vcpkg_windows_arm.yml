@@ -90,11 +90,7 @@ jobs:
               --prefix=C:\postgresql `
               --buildtype=debugoptimized `
               -Dlibxslt=disabled `
-              -Dlibxml=disabled `
-              -Dextra_lib_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib" `
-              -Dextra_include_dirs="${{ github.workspace }}\vcpkg\installed\arm64-windows\include" `
-              -Dpkg_config_path="${{ github.workspace }}\vcpkg\installed\arm64-windows\lib\pkgconfig"
-          
+              -Dlibxml=disabled           
       - name: Build
         run: |
           cd postgresql-master\build
