@@ -69,8 +69,10 @@ jobs:
             ref: master
 
       - name: add vcpkg path
-        run: echo "c:\vcpkg\installed\arm64-windows\bin" >> $ENV:GITHUB_PATH
-
+        run: |
+          echo "c:\vcpkg\installed\arm64-windows\bin" >> $ENV:GITHUB_PATH
+          vcpkg integrate install
+          
       - name: Patch Postgres for arm
         run: |
           git config --global user.name "GitHub Actions Bot"
