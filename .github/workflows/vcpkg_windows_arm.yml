@@ -86,8 +86,8 @@ jobs:
       - name: Configure
         run: |
           cd postgresql-master
-          C:\hostedtoolcache\windows\Python\3.12.9\x64\Scripts\meson.exe setup build
-          --prefix=C:\postgresql `
+          C:\hostedtoolcache\windows\Python\3.12.9\x64\Scripts\meson.exe setup build `
+              --prefix=C:\postgresql `
               --buildtype=debugoptimized `
               -Dlibxslt=disabled `
               -Dlibxml=disabled `
