@@ -81,7 +81,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v1
       - name: install Meson
-        run: C:\hostedtoolcache\windows\Python\3.12.9\x64\python.exe -m pip install meson==1.8.2
+        run: C:\hostedtoolcache\windows\Python\3.13.5\x64\python.exe -m pip install meson==1.8.2
 
       - name: Configure
         run: |
