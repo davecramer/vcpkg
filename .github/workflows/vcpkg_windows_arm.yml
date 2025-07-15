@@ -80,7 +80,7 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v1
-        
+
       - name: install Meson
         run: python.exe -m pip install meson==1.8.2
 
@@ -89,7 +89,7 @@ jobs:
           $pathString = "c:\vcpkg\installed\arm64-windows\bin"
           $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
           [Environment]::SetEnvironmentVariable("Path", "$pathString;$currentPath", "User")
-          ..\setenvarm.ps1
+          .\setenvarm.ps1
           cd postgresql-master
           C:\hostedtoolcache\windows\Python\3.12.9\x64\Scripts\meson.exe setup build `
               --prefix=C:\postgresql `
@@ -105,6 +105,6 @@ jobs:
           $pathString = "c:\vcpkg\installed\arm64-windows\bin"
           $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
           [Environment]::SetEnvironmentVariable("Path", "$pathString;$currentPath", "User")
-          ..\setenvarm.ps1
+          .\setenvarm.ps1
           cd postgresql-master\build
           ninja -j 1    
