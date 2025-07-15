@@ -88,7 +88,7 @@ jobs:
           $pathString = "c:\vcpkg\installed\arm64-windows\bin"
           $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
           [Environment]::SetEnvironmentVariable("Path", "$pathString;$currentPath", "User")
-
+          ..\setenvarm.ps1
           cd postgresql-master
           C:\hostedtoolcache\windows\Python\3.12.9\x64\Scripts\meson.exe setup build `
               --prefix=C:\postgresql `
@@ -104,6 +104,6 @@ jobs:
           $pathString = "c:\vcpkg\installed\arm64-windows\bin"
           $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
           [Environment]::SetEnvironmentVariable("Path", "$pathString;$currentPath", "User")
-
+          ..\setenvarm.ps1
           cd postgresql-master\build
           ninja -j 1    
