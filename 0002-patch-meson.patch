@@ -1,0 +1,24 @@
+From ae0534b80531aa74d1a0450048e1e233c1489089 Mon Sep 17 00:00:00 2001
+From: Dave Cramer <davecramer@gmail.com>
+Date: Wed, 16 Jul 2025 06:46:08 -0400
+Subject: [PATCH 2/2] use pkgconfig to find zlib
+
+---
+ meson.build | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index c459ab628f2..0a24b93462b 100644
+--- a/meson.build
++++ b/meson.build
+@@ -1622,7 +1622,7 @@ endif
+ zlibopt = get_option('zlib')
+ zlib = not_found_dep
+ if not zlibopt.disabled()
+-  zlib_t = dependency('zlib', required: zlibopt)
++  zlib_t = dependency('zlib', method : 'pkg-config', required: zlibopt)
+
+   if zlib_t.type_name() == 'internal'
+     # if fallback was used, we don't need to test if headers are present (they
+--
+2.48.1.windows.1

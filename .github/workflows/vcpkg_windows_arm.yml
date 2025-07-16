@@ -77,6 +77,7 @@ jobs:
           git config --global user.email "<>"
           cd postgresql-master
           git am ..\0001-patch-for-arm.patch
+          git am ..\0002-patch-meson.patch
 
       - name: Setup Python
         uses: actions/setup-python@v1
