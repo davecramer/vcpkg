@@ -96,7 +96,15 @@ jobs:
               -Dextra_lib_dirs="c:\vcpkg\installed\arm64-windows\lib" `
               -Dextra_include_dirs="c:\vcpkg\installed\arm64-windows\include" `
               -Dpkg_config_path="c:\vcpkg\installed\arm64-windows\lib\pkgconfig"
-          
+
+      - name: Upload Meson Log
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: ignore
+          name: postgresql-master-meson-log
+          path: postgresql-master\build\meson-logs\meson-log.txt
+        if: always()
+              
       - name: Build
         run: |
           cd postgresql-master\build
@@ -106,10 +114,19 @@ jobs:
         run: |
           cd postgresql-master\build
           ninja test    
-      - name: Upload Meson Log
+
+      - name: Upload test Log
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: ignore
           name: postgresql-master-meson-log
-          path: postgresql-master\build\meson-logs\meson-log.txt
+          path: postgresql-master\build\meson-logs\testlog.txt
         if: always()
+
+      - name: Upload Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: postgresql-master-arm64
+          path: /postgresql
+
