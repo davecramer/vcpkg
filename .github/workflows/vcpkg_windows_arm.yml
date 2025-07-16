@@ -77,7 +77,6 @@ jobs:
           git config --global user.email "<>"
           cd postgresql-master
           git am ..\0001-patch-for-arm.patch
-          git am ..\0002-patch-meson.patch
 
       - name: Setup Python
         uses: actions/setup-python@v1
@@ -87,29 +86,26 @@ jobs:
 
       - name: Configure
         run: |
-          $pathString = "c:\vcpkg\installed\arm64-windows\bin"
-          $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
-          [Environment]::SetEnvironmentVariable("Path", "$pathString;$currentPath", "User")
-          .\setenvarm.ps1
           cd postgresql-master
           meson.exe setup build `
               --prefix=C:\postgresql `
               --buildtype=debugoptimized `
               -Dlibxslt=disabled `
               -Dlibxml=disabled `
+              -Dzlib=disabled `
               -Dextra_lib_dirs="c:\vcpkg\installed\arm64-windows\lib" `
               -Dextra_include_dirs="c:\vcpkg\installed\arm64-windows\include" `
               -Dpkg_config_path="c:\vcpkg\installed\arm64-windows\lib\pkgconfig"
           
       - name: Build
         run: |
-          $pathString = "c:\vcpkg\installed\arm64-windows\bin"
-          $currentPath = [Environment]::GetEnvironmentVariable("Path", "User")
-          [Environment]::SetEnvironmentVariable("Path", "$pathString;$currentPath", "User")
-          .\setenvarm.ps1
           cd postgresql-master\build
           ninja -j 1 
 
+      - name: test
+        run: |
+          cd postgresql-master\build
+          ninja test    
       - name: Upload Meson Log
         uses: actions/upload-artifact@v4
         with:
