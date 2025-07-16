@@ -129,4 +129,5 @@ jobs:
           if-no-files-found: error
           name: postgresql-master-arm64
           path: /postgresql
+        if: always()
 
