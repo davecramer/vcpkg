@@ -97,8 +97,6 @@ jobs:
               --buildtype=debugoptimized `
               -Dlibxslt=disabled `
               -Dlibxml=disabled `
-              -DZLIB_LIBRARIES=c:\vcpkg\installed\arm64-windows\lib `
-              -DZLIB_INCLUDE_DIRS=c:\vcpkg\installed\arm64-windows\include `
               -Dextra_lib_dirs="c:\vcpkg\installed\arm64-windows\lib" `
               -Dextra_include_dirs="c:\vcpkg\installed\arm64-windows\include" `
               -Dpkg_config_path="c:\vcpkg\installed\arm64-windows\lib\pkgconfig"
