@@ -107,4 +107,12 @@ jobs:
           [Environment]::SetEnvironmentVariable("Path", "$pathString;$currentPath", "User")
           .\setenvarm.ps1
           cd postgresql-master\build
-          ninja -j 1    
+          ninja -j 1 
+
+      - name: Upload Meson Log
+        uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: ignore
+          name: postgresql-master-meson-log
+          path: postgresql-master\build\meson-logs\meson-log.txt
+        if: always()
