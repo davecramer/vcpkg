@@ -106,7 +106,7 @@ jobs:
       - name: Build
         run: |
           cd postgresql-master\build
-          ninja -j 1
+          ninja
           ninja install --quiet 
 
       - name: test
