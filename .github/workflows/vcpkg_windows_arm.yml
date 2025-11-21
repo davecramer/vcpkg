@@ -47,8 +47,6 @@ jobs:
         uses:  ilammy/msvc-dev-cmd@v1
         with:
           arch: arm64
-          toolset: 14.43
-          vsversion: 2022
       
       - name: Install Packages
         run: | 
