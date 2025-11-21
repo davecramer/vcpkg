@@ -83,7 +83,8 @@ jobs:
           git config --global user.email "<>"
           cd postgresql-master
           git am ..\0001-patch-for-arm.patch
-
+          git am ..\v1-0001-DMB-barries-fix-memory-ordering-on-MSVC-ARM64.patch
+          
       - name: Setup Python
         if: steps.cache-postgres.outputs.cache-hit != 'true'
         uses: actions/setup-python@v1

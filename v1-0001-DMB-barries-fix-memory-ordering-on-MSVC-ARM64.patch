@@ -1,0 +1,370 @@
+From f168acf92cca229127364f6007ff5e41a784870f Mon Sep 17 00:00:00 2001
+From: Greg Burd <greg@burd.me>
+Date: Thu, 20 Nov 2025 12:00:47 -0500
+Subject: [PATCH v1] DMB barries fix memory ordering on MSVC/ARM64
+
+MSVC ARM64 builds have been experiencing intermittent test failures
+(particularly recovery/027_stream_regress) due to insufficient memory
+barrier semantics in both atomic operations and spinlock
+implementations. Unlike GCC, which generates explicit memory barriers
+automatically, MSVC's _Interlocked* intrinsics on ARM64 lack full
+sequential consistency guarantees.
+
+This commit adds explicit Data Memory Barrier (DMB sy) instructions on
+ARM64:
+
+In src/include/port/atomics/generic-msvc.h:
+
+* Add conditional DMB barriers before and after all atomic operations
+  on ARM64/MSVC (CAS/exchange/fetch-add)
+* Barriers expand to no-ops on non-ARM64/MSVC platforms
+* Applies to all six atomic operations:
+  compare-exchange, exchange, and fetch-add for both 32-bit and 64-bit
+  values
+
+In src/include/storage/s_lock.h:
+
+Add ARM64-specific TAS() implementation with explicit barriers around
+the InterlockedCompareExchange intrinsic Replace S_UNLOCK() to use
+hardware DMB instead of just _ReadWriteBarrier() (compiler barrier is
+insufficient on ARM64) Non-ARM64 MSVC code path remains unchanged
+
+These changes ensure sequential consistency semantics matching what GCC
+generates automatically via _atomic* builtins, resolving the WAL
+replication synchronization issues that caused 027_stream_regress test
+timeouts.
+
+Performance impact is negligible: DMB instructions are already implicit
+in x86/x64 memory model, and ARM32 already provided full barriers via
+intrinsics.
+---
+ src/include/port/atomics/generic-msvc.h | 140 +++++++++++++++++++++---
+ src/include/storage/s_lock.h            |  80 +++++++++++---
+ 2 files changed, 192 insertions(+), 28 deletions(-)
+
+diff --git a/src/include/port/atomics/generic-msvc.h b/src/include/port/atomics/generic-msvc.h
+index a6ea5f1c2e7..66c35994bd3 100644
+--- a/src/include/port/atomics/generic-msvc.h
++++ b/src/include/port/atomics/generic-msvc.h
+@@ -12,13 +12,19 @@
+  * * Interlocked Variable Access
+  *   http://msdn.microsoft.com/en-us/library/ms684122%28VS.85%29.aspx
+  *
++ * On ARM64, the _Interlocked* intrinsics do not emit full memory barriers
++ * by default. This file adds explicit DMB (Data Memory Barrier) instructions
++ * for ARM64 to ensure sequential consistency semantics required by PostgreSQL,
++ * matching the behavior of GCC's __atomic_* builtins which generate appropriate
++ * barriers automatically via __aarch64_cas4_acq_rel or equivalent.
++ *
+  * src/include/port/atomics/generic-msvc.h
+  *
+  *-------------------------------------------------------------------------
+  */
+ #include <intrin.h>
+ 
+-/* intentionally no include guards, should only be included by atomics.h */
++ /* intentionally no include guards, should only be included by atomics.h */
+ #ifndef INSIDE_ATOMICS_H
+ #error "should be included via atomics.h"
+ #endif
+@@ -43,31 +49,93 @@ typedef struct pg_attribute_aligned(8) pg_atomic_uint64
+ } pg_atomic_uint64;
+ 
+ 
++/*
++ * ARM64-specific memory barrier helper macros
++ *
++ * MSVC ARM64 _Interlocked* intrinsics do not emit full memory barriers.
++ * We use explicit __dmb(_ARM64_BARRIER_SY) to provide sequential consistency.
++ * On other architectures, these macros expand to nothing.
++ */
++#if defined(_ARM64_)
++#define PG_ARM64_DMB_BEFORE() __dmb(_ARM64_BARRIER_SY)
++#define PG_ARM64_DMB_AFTER()  __dmb(_ARM64_BARRIER_SY)
++#else
++#define PG_ARM64_DMB_BEFORE() ((void)0)
++#define PG_ARM64_DMB_AFTER()  ((void)0)
++#endif
++
++
++ /*
++  * pg_atomic_compare_exchange_u32
++  *
++  * Compare and swap for 32-bit values with full memory barrier semantics
++  * (sequential consistency).
++  *
++  * Implementation notes:
++  * - ARM64: Explicit DMB barriers added before and after CAS
++  * - x86/x64, ARM32: _InterlockedCompareExchange provides full barriers
++  */
+ #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U32
+ static inline bool
+-pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
+-									uint32 *expected, uint32 newval)
++pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32* ptr,
++	uint32* expected, uint32 newval)
+ {
+ 	bool	ret;
+ 	uint32	current;
++
++	PG_ARM64_DMB_BEFORE();
+ 	current = InterlockedCompareExchange(&ptr->value, newval, *expected);
++	PG_ARM64_DMB_AFTER();
++
+ 	ret = current == *expected;
+ 	*expected = current;
+ 	return ret;
+ }
+ 
++/*
++ * pg_atomic_exchange_u32
++ *
++ * Atomically exchange a new value for an old value with full memory barrier
++ * semantics (sequential consistency).
++ *
++ * Implementation notes:
++ * - ARM64: Explicit DMB barriers added before and after exchange
++ * - x86/x64, ARM32: _InterlockedExchange provides full barriers
++ */
+ #define PG_HAVE_ATOMIC_EXCHANGE_U32
+ static inline uint32
+-pg_atomic_exchange_u32_impl(volatile pg_atomic_uint32 *ptr, uint32 newval)
++pg_atomic_exchange_u32_impl(volatile pg_atomic_uint32* ptr, uint32 newval)
+ {
+-	return InterlockedExchange(&ptr->value, newval);
++	uint32	result;
++
++	PG_ARM64_DMB_BEFORE();
++	result = InterlockedExchange(&ptr->value, newval);
++	PG_ARM64_DMB_AFTER();
++
++	return result;
+ }
+ 
++/*
++ * pg_atomic_fetch_add_u32
++ *
++ * Atomically add a value to an atomic variable with full memory barrier
++ * semantics (sequential consistency).
++ *
++ * Implementation notes:
++ * - ARM64: Explicit DMB barriers added before and after fetch-add
++ * - x86/x64, ARM32: _InterlockedExchangeAdd provides full barriers
++ */
+ #define PG_HAVE_ATOMIC_FETCH_ADD_U32
+ static inline uint32
+-pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
++pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32* ptr, int32 add_)
+ {
+-	return InterlockedExchangeAdd(&ptr->value, add_);
++	uint32	result;
++
++	PG_ARM64_DMB_BEFORE();
++	result = InterlockedExchangeAdd(&ptr->value, add_);
++	PG_ARM64_DMB_AFTER();
++
++	return result;
+ }
+ 
+ /*
+@@ -78,14 +146,28 @@ pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
+  */
+ #pragma intrinsic(_InterlockedCompareExchange64)
+ 
++ /*
++  * pg_atomic_compare_exchange_u64
++  *
++  * Compare and swap for 64-bit values with full memory barrier semantics
++  * (sequential consistency).
++  *
++  * Implementation notes:
++  * - ARM64: Explicit DMB barriers added before and after CAS
++  * - x86/x64, ARM32: _InterlockedCompareExchange64 provides full barriers
++  */
+ #define PG_HAVE_ATOMIC_COMPARE_EXCHANGE_U64
+ static inline bool
+-pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
+-									uint64 *expected, uint64 newval)
++pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64* ptr,
++	uint64* expected, uint64 newval)
+ {
+ 	bool	ret;
+ 	uint64	current;
++
++	PG_ARM64_DMB_BEFORE();
+ 	current = _InterlockedCompareExchange64(&ptr->value, newval, *expected);
++	PG_ARM64_DMB_AFTER();
++
+ 	ret = current == *expected;
+ 	*expected = current;
+ 	return ret;
+@@ -96,20 +178,52 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
+ 
+ #pragma intrinsic(_InterlockedExchange64)
+ 
++/*
++ * pg_atomic_exchange_u64
++ *
++ * Atomically exchange a new 64-bit value for an old value with full memory
++ * barrier semantics (sequential consistency).
++ *
++ * Implementation notes:
++ * - ARM64: Explicit DMB barriers added before and after exchange
++ * - x86/x64: _InterlockedExchange64 provides full barriers
++ */
+ #define PG_HAVE_ATOMIC_EXCHANGE_U64
+ static inline uint64
+-pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64 *ptr, uint64 newval)
++pg_atomic_exchange_u64_impl(volatile pg_atomic_uint64* ptr, uint64 newval)
+ {
+-	return _InterlockedExchange64(&ptr->value, newval);
++	uint64	result;
++
++	PG_ARM64_DMB_BEFORE();
++	result = _InterlockedExchange64(&ptr->value, newval);
++	PG_ARM64_DMB_AFTER();
++
++	return result;
+ }
+ 
+ #pragma intrinsic(_InterlockedExchangeAdd64)
+ 
++/*
++ * pg_atomic_fetch_add_u64
++ *
++ * Atomically add a value to a 64-bit atomic variable with full memory barrier
++ * semantics (sequential consistency).
++ *
++ * Implementation notes:
++ * - ARM64: Explicit DMB barriers added before and after fetch-add
++ * - x86/x64: _InterlockedExchangeAdd64 provides full barriers
++ */
+ #define PG_HAVE_ATOMIC_FETCH_ADD_U64
+ static inline uint64
+-pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
++pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64* ptr, int64 add_)
+ {
+-	return _InterlockedExchangeAdd64(&ptr->value, add_);
++	uint64	result;
++
++	PG_ARM64_DMB_BEFORE();
++	result = _InterlockedExchangeAdd64(&ptr->value, add_);
++	PG_ARM64_DMB_AFTER();
++
++	return result;
+ }
+ 
+ #endif /* _WIN64 */
+diff --git a/src/include/storage/s_lock.h b/src/include/storage/s_lock.h
+index be7aaf6b013..f226d2058de 100644
+--- a/src/include/storage/s_lock.h
++++ b/src/include/storage/s_lock.h
+@@ -598,29 +598,82 @@ tas(volatile slock_t *lock)
+ typedef LONG slock_t;
+ 
+ #define HAS_TEST_AND_SET
++
++/*
++ * MSVC spinlock implementation
++ *
++ * On ARM64, explicit DMB (Data Memory Barrier) instructions are required
++ * to provide sequential consistency semantics. InterlockedCompareExchange
++ * alone does not emit full barriers on ARM64 [1]. _ReadWriteBarrier() is
++ * a compiler barrier only and does not prevent CPU reordering [2].
++ *
++ * [1] - Microsoft Learn: _InterlockedCompareExchange Intrinsic Functions - ARM intrinsics
++ * https://learn.microsoft.com/en-us/cpp/intrinsics/interlockedcompareexchange-intrinsic-functions?view=msvc-170
++ * [2] - Microsoft Learn: _ReadWriteBarrier is a Compiler Barrier
++ * https://learn.microsoft.com/en-us/cpp/intrinsics/compiler-intrinsics?view=msvc-170
++ */
++#if defined(_M_ARM64)
++ /* ARM64 requires explicit memory barriers for spinlock acquire/release */
++#define TAS(lock) tas_msvc_arm64(lock)
++
++static __forceinline int
++tas_msvc_arm64(volatile slock_t* lock)
++{
++	int result;
++
++	/* Full barrier before atomic operation */
++	__dmb(_ARM64_BARRIER_SY);
++
++	/* Atomic compare-and-swap */
++	result = InterlockedCompareExchange(lock, 1, 0);
++
++	/* Full barrier after atomic operation */
++	__dmb(_ARM64_BARRIER_SY);
++
++	return result;
++}
++
++#define S_UNLOCK(lock) \
++	do { \
++		__dmb(_ARM64_BARRIER_SY);  /* Full barrier before release */ \
++		(*(lock)) = 0; \
++	} while (0)
++
++#else
++ /*
++  * Non-ARM64 MSVC (x86/x64): InterlockedCompareExchange provides full barriers
++  *
++  * Microsoft Learn: InterlockedCompareExchange generates full memory barrier on x64
++  * https://learn.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-interlockedcompareexchange
++  */
+ #define TAS(lock) (InterlockedCompareExchange(lock, 1, 0))
+ 
++#define S_UNLOCK(lock)	\
++	do { _ReadWriteBarrier(); (*(lock)) = 0; } while (0)
++
++#endif /* _M_ARM64 */
++
+ #define SPIN_DELAY() spin_delay()
+ 
+-/*
+- * If using Visual C++ on Win64, inline assembly is unavailable.
+- * Use architecture specific intrinsics.
+- */
++  /*
++   * If using Visual C++ on Win64, inline assembly is unavailable.
++   * Use architecture specific intrinsics.
++   */
+ #if defined(_WIN64)
+-/*
+- * For Arm64, use __isb intrinsic. See aarch64 inline assembly definition for details.
+- */
++   /*
++	* For Arm64, use __isb intrinsic. See aarch64 inline assembly definition for details.
++	*/
+ #ifdef _M_ARM64
+ static __forceinline void
+ spin_delay(void)
+ {
+-	 /* Reference: https://learn.microsoft.com/en-us/cpp/intrinsics/arm64-intrinsics#BarrierRestrictions */
++	/* Reference: https://learn.microsoft.com/en-us/cpp/intrinsics/arm64-intrinsics#BarrierRestrictions */
+ 	__isb(_ARM64_BARRIER_SY);
+ }
+ #else
+-/*
+- * For x64, use _mm_pause intrinsic instead of rep nop.
+- */
++	/*
++	 * For x64, use _mm_pause intrinsic instead of rep nop.
++	 */
+ static __forceinline void
+ spin_delay(void)
+ {
+@@ -639,10 +692,7 @@ spin_delay(void)
+ #include <intrin.h>
+ #pragma intrinsic(_ReadWriteBarrier)
+ 
+-#define S_UNLOCK(lock)	\
+-	do { _ReadWriteBarrier(); (*(lock)) = 0; } while (0)
+-
+-#endif
++#endif /* _MSC_VER */
+ 
+ 
+ #endif	/* !defined(HAS_TEST_AND_SET) */
+-- 
+2.52.0.windows.1
+
