@@ -64,12 +64,20 @@ jobs:
             path: postgresql-master
             ref: master
 
+      - name: Cache PostgreSQL Binary
+        id: cache-postgres
+        uses: actions/cache@v4
+        with:
+          path: C:\postgresql
+          key: postgres-binary-arm64-${{ github.sha }}
+
       - name: add vcpkg path
         run: |
           echo "c:/vcpkg/installed/arm64-windows/bin" >> $ENV:GITHUB_PATH
           vcpkg integrate install
 
       - name: Patch Postgres for arm
+        if: steps.cache-postgres.outputs.cache-hit != 'true'
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "<>"
@@ -77,12 +85,15 @@ jobs:
           git am ..\0001-patch-for-arm.patch
 
       - name: Setup Python
+        if: steps.cache-postgres.outputs.cache-hit != 'true'
         uses: actions/setup-python@v1
 
       - name: install Meson
+        if: steps.cache-postgres.outputs.cache-hit != 'true'
         run: python.exe -m pip install meson==1.8.2
 
       - name: Configure
+        if: steps.cache-postgres.outputs.cache-hit != 'true'
         run: |
           cd postgresql-master
           meson.exe setup build `
@@ -96,14 +107,15 @@ jobs:
               -Dpkg_config_path="c:\vcpkg\installed\arm64-windows\lib\pkgconfig"
 
       - name: Upload Meson Log
+        if: steps.cache-postgres.outputs.cache-hit != 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           if-no-files-found: ignore
           name: postgresql-master-meson-log
           path: postgresql-master\build\meson-logs\meson-log.txt
-        if: always()
               
       - name: Build
+        if: steps.cache-postgres.outputs.cache-hit != 'true'
         run: |
           cd postgresql-master\build
           ninja
